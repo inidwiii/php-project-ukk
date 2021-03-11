@@ -15,6 +15,7 @@ class Application
 
         define('DS', DIRECTORY_SEPARATOR);
         define('ROOT', realpath(dirname(__DIR__, 2)) . DS);
+        define('PATH_BASE', '/ukk');
         define('PATH_APP', realpath(ROOT . 'app') . DS);
         define('PATH_CONFIG', realpath(ROOT . 'configs') . DS);
         define('PATH_LIB', realpath(ROOT . 'src') . DS);
@@ -33,7 +34,7 @@ class Application
 
     /**
      * Get the instance of the Application class
-     * @return \Illuminate\Core\Application
+     * @return \Illuminate\Core\Application|self
      */
     public static function instance(): \Illuminate\Core\Application
     {
