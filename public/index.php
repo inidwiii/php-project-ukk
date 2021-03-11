@@ -1,6 +1,20 @@
 <?php
 
 /**
+ * EGovernmenet
+ * 
+ * A simple application made for the government
+ * to handle public complaints toward them
+ * 
+ * @author inidwiii  <ini.dwiii@gmail.com>
+ * @copyright 2021 EGovernment
+ * @package App
+ * @package Illuminate
+ */
+
+define('START_TIME', microtime(true));
+
+/**
  * Including the autoloader file
  * 
  * The autoloader file is included due to its function
