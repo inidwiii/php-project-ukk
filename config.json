@@ -1,0 +1,8 @@
+{
+    "autoload": {
+        "class": {
+            "App\\": "app/",
+            "Illuminate\\": "src/"
+        }
+    }
+}
