@@ -1,6 +1,7 @@
 {
     "autoload": {
-        "class": {
+        "files": ["src/Core/helpers.php"],
+        "classes": {
             "App\\": "app/",
             "Illuminate\\": "src/"
         }
