@@ -82,20 +82,21 @@ if (!function_exists('array_set')) {
         }
 
         $keys = explode('.', $key);
+        $temp = &$array;
 
         while (count($keys) > 1) {
             $key = array_shift($keys);
 
             // if the current value is not set and is not an array, we
             // will assign them as an empty array and keep digging
-            if (!isset($array[$key]) || !is_array($array[$key])) {
-                $array[$key] = [];
+            if (!isset($temp[$key]) || !is_array($temp[$key])) {
+                $temp[$key] = [];
             }
 
-            $array = &$array[$key];
+            $temp = &$temp[$key];
         }
 
-        $array[array_shift($keys)] = $value;
+        $temp[array_shift($keys)] = $value;
         return $value;
     }
 }
