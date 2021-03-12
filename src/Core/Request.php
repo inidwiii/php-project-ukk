@@ -62,7 +62,7 @@ class Request
      * @param string|null $suffix
      * @return string
      */
-    public function base($suffix = null)
+    public function base(?string $suffix = null)
     {
         return "{$this->_requestScheme}://{$this->_requestHost}/ukk" . ltrim($suffix ?? '/', '/');
     }
@@ -109,7 +109,7 @@ class Request
      * @param mixed|null $default
      * @return mixed
      */
-    public function input($key = null, $default = null)
+    public function input(?string $key = null, $default = null)
     {
         if (is_null($key)) {
             return $this->_requestInput;
@@ -128,7 +128,7 @@ class Request
      * @param mixed|null $default
      * @return mixed
      */
-    public function query($key = null, $default = null)
+    public function query(?string $key = null, $default = null)
     {
         if (is_null($key)) {
             return $this->_requestQuery;
@@ -146,16 +146,10 @@ class Request
      * @param bool $full
      * @return string
      */
-    public function url($full = false)
+    public function url(bool $full = false)
     {
         $url  = "{$this->_requestScheme}://{$this->_requestHost}{$this->_requestPath}";
-        $url .= $full ? '?' . join('&', array_map(
-            function ($key, $value) {
-                return "{$key}={$value}";
-            },
-            array_keys($this->_requestQuery),
-            array_values($this->_requestQuery)
-        )) : '';
+        $url .= $full && !empty($_SERVER['QUERY_STRING']) ? '?' . $_SERVER['QUERY_STRING'] : '';
 
         return $url;
     }
