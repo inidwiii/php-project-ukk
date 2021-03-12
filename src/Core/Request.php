@@ -58,6 +58,16 @@ class Request
     }
 
     /**
+     * Get the base url of the application
+     * @param string|null $suffix
+     * @return string
+     */
+    public function base($suffix = null)
+    {
+        return "{$this->_requestScheme}://{$this->_requestHost}/ukk" . ltrim($suffix ?? '/', '/');
+    }
+
+    /**
      * Capturing incoming request data and store
      * them into each specific request property
      * @return \Illuminate\Core\Request|self
@@ -73,8 +83,13 @@ class Request
         $this->_requestScheme   = $_SERVER['REQUEST_SCHEME'];
         $this->_requestUri      = str_replace(PATH_BASE, '', $this->_requestPath);
 
-        foreach ($_GET as $key => $v) $this->_requestQuery[$key] = filter_input(INPUT_GET, $key);
-        foreach ($_POST as $key => $v) $this->_requestInput[$key] = filter_input(INPUT_POST, $key);
+        foreach ($_GET as $key => $v) {
+            $this->_requestQuery[$key] = filter_input(INPUT_GET, $key);
+        }
+
+        foreach ($_POST as $key => $v) {
+            $this->_requestInput[$key] = filter_input(INPUT_POST, $key);
+        }
 
         return $this;
     }
@@ -96,8 +111,14 @@ class Request
      */
     public function input($key = null, $default = null)
     {
-        if (is_null($key)) return $this->_requestInput;
-        if (!(bool) array_key_exists($key, $this->_requestInput)) return $default;
+        if (is_null($key)) {
+            return $this->_requestInput;
+        }
+
+        if (!(bool) array_key_exists($key, $this->_requestInput)) {
+            return $default;
+        }
+
         return $this->_requestInput[$key];
     }
 
@@ -109,8 +130,14 @@ class Request
      */
     public function query($key = null, $default = null)
     {
-        if (is_null($key)) return $this->_requestQuery;
-        if (!(bool) array_key_exists($key, $this->_requestQuery)) return $default;
+        if (is_null($key)) {
+            return $this->_requestQuery;
+        }
+
+        if (!(bool) array_key_exists($key, $this->_requestQuery)) {
+            return $default;
+        }
+
         return $this->_requestQuery[$key];
     }
 

@@ -31,3 +31,7 @@ require realpath(__DIR__ . '/../autoload.php');
  */
 
 $app = new \Illuminate\Core\Application;
+$req = new \Illuminate\Core\Request;
+$res = new \Illuminate\Core\Response;
+
+if ($req->url() === 'http://localhost/ukk/') $res->redirect('http://localhost/ukk/redirect');
