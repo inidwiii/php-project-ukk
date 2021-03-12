@@ -4,27 +4,59 @@ namespace Illuminate\Core;
 
 class Response
 {
+    /**
+     * Hold current response headers
+     * @var array
+     */
+    private $_responseHeader;
+
+    /**
+     * Hold current response status code
+     * @var int
+     */
     private $_responseStatus;
 
     public function __construct()
     {
+        $this->_responseHeader = getallheaders();
         $this->_responseStatus = http_response_code();
     }
 
-    public function header($name, $value)
+    /**
+     * Get or set HTTP Response headers 
+     * @param string $name
+     * @param mixed $value
+     * @return \Illuminate\Core\Response|string
+     */
+    public function header(string $name, $value = null)
     {
+        if (is_null($value)) {
+            return $this->_responseHeader[$name];
+        }
+
         header("{$name}: {$value}");
         return $this;
     }
 
+    /**
+     * Returning HTTP HTML Response
+     * @param mixed $response
+     * @return \Illuminate\Core\Response
+     */
     public function html($response)
     {
         $this->header('Content-Length', strlen($response));
         $this->header('Content-Type', 'text/html');
 
-        echo $response;
+        echo (string) $response;
+        return $this;
     }
 
+    /**
+     * Returning HTTP JSON Response
+     * @param mixed $response
+     * @return \Illuminate\Core\Response
+     */
     public function json($response)
     {
         $response = json_encode($response, JSON_PRETTY_PRINT);
@@ -33,16 +65,27 @@ class Response
         $this->header('Content-Type', 'application/json');
 
         echo $response;
+        return $this;
     }
 
-    public function redirect($url)
+    /**
+     * Redirecting current page into target url
+     * @param string $url
+     * @return \Illuminate\Core\Response
+     */
+    public function redirect(string $url)
     {
         $this->status(302);
         header("Location: {$url}");
         return $this;
     }
 
-    public function status($statusCode = null)
+    /**
+     * Get or set the current HTTP Response Status Code
+     * @param int|null $statusCode
+     * @return int
+     */
+    public function status(?int $statusCode = null)
     {
         if (is_null($statusCode)) {
             return $this->_responseStatus;
@@ -52,6 +95,11 @@ class Response
         return $this->_responseStatus;
     }
 
+    /**
+     * Set multiple new response headers data
+     * @param array $headers
+     * @return \Illuminate\Core\Response
+     */
     public function withHeaders(array $headers)
     {
         foreach ($headers as $name => $value) {
