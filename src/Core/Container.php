@@ -4,27 +4,39 @@ namespace Illuminate\Core;
 
 class Container
 {
+    /**
+     * Hold all the instances registered
+     * @var array $_instances
+     */
     private $_instances = [];
 
-    public function bind(string $abstract, $concrete = null)
+    /**
+     * Registering a new instance object into the container
+     * @var string $abstract
+     * @var callable|null|object|string $concrete
+     * @return \Illuminate\Core\Container|self
+     */
+    public function bind($abstract, $concrete = null)
     {
         $this->register($abstract, $concrete, false);
         return $this;
     }
 
-    public function call($concrete, $method, ...$args)
+    /**
+     * Call to a method from the registered instance
+     * @param string $abstract
+     * @param string $method
+     * @param mixed[] ...$args
+     * @return mixed
+     * @throws \InvalidArgumentException|\ReflectionException
+     */
+    public function call($abstract, $method, ...$args)
     {
-        switch (true) {
-            case is_object($concrete):
-                break;
-            case !is_object($concrete) && is_callable($concrete):
-                $concrete = call_user_func($concrete, $this);
-                break;
-            case array_key_exists($concrete, $this->_instances):
-                $concrete = $this->make($concrete);
-                break;
+        if (!array_key_exists($abstract, $this->_instances)) {
+            throw new \InvalidArgumentException("Can't find abstract with name '{$abstract}'");
         }
 
+        $concrete = $this->make($abstract);
         $method = new \ReflectionMethod($concrete, $method);
 
         return $method->invokeArgs($concrete, $this->resolveDependencies($method, $args));
@@ -35,6 +47,12 @@ class Container
         var_dump($this->_instances);
     }
 
+    /**
+     * Get the registered instantiation of the instance
+     * @param string $abstract
+     * @return object
+     * @throws \InvalidArgumentException|\ReflectionException
+     */
     public function make(string $abstract)
     {
         if (!array_key_exists($abstract, $this->_instances)) {
@@ -54,13 +72,27 @@ class Container
         return $this->resolve($current['concrete']);
     }
 
-    public function singleton(string $abstract, $concrete = null)
+    /**
+     * Registering a new instance object into  
+     * the container as a singleton instance 
+     * @param string $abstract
+     * @param callable|null|object|string $concrete
+     * @return \Illuminate\Core\Container|self
+     */
+    public function singleton($abstract, $concrete = null)
     {
         $this->register($abstract, $concrete, true);
         return $this;
     }
 
-    private function register(string $abstract, $concrete, bool $singleton)
+    /**
+     * Registering a new instance
+     * @param string $abstract
+     * @param callable|null|object|string $concrete
+     * @param bool $singleton
+     * @return void
+     */
+    private function register($abstract, $concrete, $singleton)
     {
         if (is_null($concrete)) {
             $concrete = $abstract;
@@ -73,6 +105,12 @@ class Container
         $this->_instances[$abstract] = compact('concrete', 'singleton');
     }
 
+    /**
+     * Resolving the registered instance called
+     * @param string|object $concrete
+     * @return object
+     * @throws \ReflectionException
+     */
     private function resolve($concrete)
     {
         $class = new \ReflectionClass($concrete);
@@ -81,7 +119,14 @@ class Container
         return $class->newInstanceArgs($dependencies);
     }
 
-    private function resolveDependencies(?\ReflectionMethod $method, array $args = [])
+    /**
+     * Resolving dependencies that the instance need
+     * @param \ReflectionMethod $method
+     * @param array $args
+     * @return array
+     * @throws \ReflectionException
+     */
+    private function resolveDependencies($method, array $args = [])
     {
         $resolvedDependencies = [];
 
