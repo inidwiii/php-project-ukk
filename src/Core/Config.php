@@ -21,7 +21,7 @@ class Config
      * @param mixed $default
      * @return mixed
      */
-    public function get(string $key, $default = null)
+    public function get($key, $default = null)
     {
         return array_get($this->_repository, $key, $default);
     }
@@ -32,7 +32,7 @@ class Config
      * @param mixed $value
      * @return mixed
      */
-    public function set(string $key, $value)
+    public function set($key, $value)
     {
         return array_set($this->_repository, $key, $value);
     }

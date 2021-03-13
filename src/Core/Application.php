@@ -17,7 +17,7 @@ class Application
         define('ROOT', realpath(dirname(__DIR__, 2)) . DS);
         define('PATH_BASE', '/ukk');
         define('PATH_APP', realpath(ROOT . 'app') . DS);
-        define('PATH_CONFIG', realpath(ROOT . 'configs') . DS);
+        define('PATH_CONFIG', realpath(ROOT . 'config') . DS);
         define('PATH_LIB', realpath(ROOT . 'src') . DS);
         define('PATH_PUBLIC', realpath(ROOT . 'public') . DS);
         define('PATH_ROUTE', realpath(ROOT . 'routes') . DS);

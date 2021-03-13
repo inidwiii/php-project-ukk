@@ -28,7 +28,7 @@ class Response
      * @param mixed $value
      * @return \Illuminate\Core\Response|string
      */
-    public function header(string $name, $value = null)
+    public function header($name, $value = null)
     {
         if (is_null($value)) {
             return $this->_responseHeader[$name];
@@ -73,7 +73,7 @@ class Response
      * @param string $url
      * @return \Illuminate\Core\Response
      */
-    public function redirect(string $url)
+    public function redirect($url)
     {
         $this->status(302);
         header("Location: {$url}");
@@ -85,7 +85,7 @@ class Response
      * @param int|null $statusCode
      * @return int
      */
-    public function status(?int $statusCode = null)
+    public function status($statusCode = null)
     {
         if (is_null($statusCode)) {
             return $this->_responseStatus;
@@ -100,7 +100,7 @@ class Response
      * @param array $headers
      * @return \Illuminate\Core\Response
      */
-    public function withHeaders(array $headers)
+    public function withHeaders($headers)
     {
         foreach ($headers as $name => $value) {
             $this->header($name, $value);
