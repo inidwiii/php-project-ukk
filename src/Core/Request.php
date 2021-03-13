@@ -116,7 +116,7 @@ class Request
         }
 
         if (!(bool) array_key_exists($key, $this->_requestInput)) {
-            return $default;
+            return value($default);
         }
 
         return $this->_requestInput[$key];
@@ -135,7 +135,7 @@ class Request
         }
 
         if (!(bool) array_key_exists($key, $this->_requestQuery)) {
-            return $default;
+            return value($default);
         }
 
         return $this->_requestQuery[$key];

@@ -15,7 +15,7 @@ if (!function_exists('app')) {
         $appInstance = Application::instance();
 
         if (!is_null($abstract)) {
-            return $appInstance;
+            return $appInstance->make($abstract);
         }
 
         return $appInstance;
@@ -33,7 +33,7 @@ if (!function_exists('array_get')) {
     function array_get($array, $key, $default = null)
     {
         if (!is_array($array)) {
-            return $default;
+            return value($default);
         }
 
         if (is_null($key)) {
