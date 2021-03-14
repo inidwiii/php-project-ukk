@@ -136,7 +136,13 @@ class Container
 
         foreach ($method->getParameters() as $parameter) {
             if ($parameter->getType() instanceof \ReflectionNamedType) {
-                $resolvedDependencies[] = $this->resolve($parameter->getType()->getName());
+                $instanceName = $parameter->getType()->getName();
+
+                $resolvedDependencies[] = call_user_func_array(
+                    [$this, array_key_exists($instanceName, $this->_instances) ? 'make' : 'resolve'],
+                    [$instanceName]
+                );
+
                 continue;
             }
 
