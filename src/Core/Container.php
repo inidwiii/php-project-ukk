@@ -32,19 +32,27 @@ class Container
      */
     public function call($abstract, $method, ...$args)
     {
-        if (!array_key_exists($abstract, $this->_instances)) {
-            throw new \InvalidArgumentException("Can't find abstract with name '{$abstract}'");
-        }
-
         $concrete = $this->make($abstract);
         $method = new \ReflectionMethod($concrete, $method);
 
         return $method->invokeArgs($concrete, $this->resolveDependencies($method, $args));
     }
 
-    public function dump()
+    /**
+     * Call or dispatch method from the inserted instance
+     * @param string $concrete
+     * @param string $method
+     * @param mixed[] $args
+     * @return mixed
+     */
+    public function dispatch($concrete, $method, ...$args)
     {
-        var_dump($this->_instances);
+        $method = new \ReflectionMethod($concrete, $method);
+
+        return $method->invokeArgs(
+            $this->resolve($concrete),
+            $this->resolveDependencies($method, $args)
+        );
     }
 
     /**
@@ -53,7 +61,7 @@ class Container
      * @return object
      * @throws \InvalidArgumentException|\ReflectionException
      */
-    public function make(string $abstract)
+    public function make($abstract)
     {
         if (!array_key_exists($abstract, $this->_instances)) {
             throw new \InvalidArgumentException("Can't find abstract '{$abstract}'");
