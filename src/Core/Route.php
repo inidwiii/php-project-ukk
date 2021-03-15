@@ -2,10 +2,11 @@
 
 namespace Illuminate\Core;
 
+use Illuminate\Facade\Config;
+
 class Route
 {
     const METHOD_GET = 'get';
-
     const METHOD_POST = 'post';
 
     /**
@@ -14,6 +15,10 @@ class Route
      */
     private $_current;
 
+    /**
+     * Hold the instance of the middleware
+     * @var \Illuminate\Core\Middleware $_middleware
+     */
     private $_middleware;
 
     /**
@@ -41,16 +46,34 @@ class Route
     private $_response;
 
     /**
+     * Hold the current active controller
+     * @var object|string
+     */
+    private $_routeController;
+
+    /**
      * Hold all the routes registered
      * @var array $_routeMap
      */
     private $_routeMap = [];
 
+    /**
+     * Hold the current active method
+     * @var string
+     */
+    private $_routeMethod;
+
+    /**
+     * Hold the current active route params
+     * @var array
+     */
+    private $_routeParams = [];
+
     public function __construct(Middleware $middleware, Request $request, Response $response)
     {
-        $this->_middleware = $middleware;
-        $this->_request = $request;
-        $this->_response = $response;
+        $this->_middleware  = $middleware;
+        $this->_request     = $request;
+        $this->_response    = $response;
     }
 
     /**
@@ -59,47 +82,31 @@ class Route
      */
     public function capture()
     {
-        $this->_current = null;
         $this->extractRoute();
 
-        $requestMethod = $this->_request->method();
-        $requestPath = $this->_request->path();
+        $requestMethod  = $this->_request->method();
+        $requestPath    = $this->_request->path();
 
         foreach ($this->_routeMap as $routeId => $route) {
             if (preg_match($route['reg'], $requestPath, $routeParams) && $route['method'] === $requestMethod) {
-                extract($this->extractRouteData($routeId, $route, $routeParams));
+                $this->_current = $routeId;
+                $this->_routeParams = $routeParams;
 
-                foreach ($this->_middlewareMap[$routeId] as $middleware) {
-                    $middleware = $this->_middleware->resolve($middleware);
+                $this->extractRouteData($route);
+                $this->resolveController();
+                $this->resolveMiddleware($routeId);
+                $this->resolveBeforeMiddleware();
+                $this->resolveRoute($response);
+                $this->resolveAfterMiddleware();
 
-                    if (is_array($middleware)) {
-                        $this->_middleware->registerGroup($middleware);
-                        continue;
-                    }
-
-                    $this->_middleware->register(new $middleware);
-                }
-
-                $this->_middleware->executeBeforeRequest();
-
-                // current
-                $responseContent = app()->dispatch($routeController, $routeMethod, ...$routeParams);
-
-                $this->_response->withHeaders([
-                    'X-App-Name'        => config('app.name'),
-                    'X-App-Lang'        => config('app.lang'),
-                    'Content-Length'    => strlen($responseContent)
-                ])->status(200);
-
-                echo $responseContent;
-                // end current
-
-                $this->_middleware->executeAfterRequest();
-
+                $this->_current = null;
                 return;
             }
         }
 
+        $this->_response->header('X-App-CSRF', $_SESSION['_token']);
+        $this->_response->header('X-App-Name', Config::get('app.name'));
+        $this->_response->header('X-App-Lang', Config::get('app.lang'));
         $this->_response->status(404);
         die('404 - Not Found');
     }
@@ -164,14 +171,11 @@ class Route
      * @param array $routeParams
      * @return array
      */
-    private function extractRouteData($routeId, $routeData, $routeParams)
+    private function extractRouteData($routeData)
     {
-        return [
-            'routeController' => $routeData['callback']['controller'],
-            'routeMethod' => $routeData['callback']['method'],
-            'routeMiddleware' => $this->_middlewareMap[$routeId],
-            'routeParams' => array_slice($routeParams, 1)
-        ];
+        $this->_routeController = $routeData['callback']['controller'];
+        $this->_routeMethod     = $routeData['callback']['method'];
+        $this->_routeParams     = array_slice($this->_routeParams, 1);
     }
 
     /**
@@ -246,5 +250,77 @@ class Route
         ];
 
         return $this->registerRouteMiddleware($url, ['before']);
+    }
+
+    /**
+     * Registering after request middlewares
+     * @return mixed
+     */
+    private function resolveAfterMiddleware()
+    {
+        return $this->_middleware->executeAfterRequest();
+    }
+
+    /**
+     * Registering before request middleware
+     * @return mixed
+     */
+    private function resolveBeforeMiddleware()
+    {
+        return $this->_middleware->executeBeforeRequest();
+    }
+
+    /**
+     * Resolving controller object
+     * @return void
+     */
+    private function resolveController()
+    {
+        $class = new \ReflectionClass($this->_routeController);
+        $dependencies = app()->makeDependencies($class->getConstructor());
+        $this->_routeController = $class->newInstanceArgs($dependencies);
+    }
+
+    /**
+     * Resolving registered middleware
+     * @param string $routeId
+     * @return void
+     */
+    private function resolveMiddleware($routeId)
+    {
+        if (!array_key_exists($routeId, $this->_middlewareMap)) {
+            throw new \InvalidArgumentException("There are no middleware assigned to '{$routeId}'");
+        }
+
+        foreach ((array) $this->_middlewareMap[$routeId] as $middleware) {
+            $middleware = $this->_middleware->resolve($middleware);
+
+            if (is_array($middleware)) {
+                $this->_middleware->registerGroup($middleware);
+                continue;
+            }
+
+            $this->_middleware->register($middleware);
+        }
+    }
+
+    /**
+     * Resolving response content
+     * @param string|null &$response
+     * @return string
+     */
+    private function resolveRoute(&$response)
+    {
+        $method         = new \ReflectionMethod($this->_routeController, $this->_routeMethod);
+        $dependencies   = app()->makeDependencies($method, $this->_routeParams);
+        $response       = @$method->invokeArgs($this->_routeController, $dependencies);
+
+        $this->_response->header('X-App-CSRF', $_SESSION['_token']);
+        $this->_response->header('X-App-Name', Config::get('app.name'));
+        $this->_response->header('X-App-Lang', Config::get('app.lang'));
+        $this->_response->header('Content-Length', strlen($response));
+        $this->_response->status(200);
+
+        echo $response;
     }
 }
