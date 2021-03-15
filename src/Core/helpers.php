@@ -1,8 +1,8 @@
 <?php
 
 use Illuminate\Core\Application;
-use Illuminate\Core\Config;
-use Illuminate\Core\Request;
+use Illuminate\Facade\Config;
+use Illuminate\Facade\Route;
 
 if (!function_exists('app')) {
     /**
@@ -112,7 +112,7 @@ if (!function_exists('config')) {
      */
     function config($key, $default = null)
     {
-        return app(Config::class)->get($key, $default);
+        return Config::get($key, $default);
     }
 }
 
@@ -125,6 +125,20 @@ if (!function_exists('csrf')) {
     {
         $_token = $_SESSION['_token'];
         return '<input type="hidden" name="_token" value="' . $_token . '" />';
+    }
+}
+
+if (!function_exists('route')) {
+    /**
+     * Resolve the url of the given path or named route
+     * @param string $routeName
+     * @param array $args
+     * @return string
+     * @throws \InvalidArgumentException
+     */
+    function route($routeName, array $args = [])
+    {
+        return Route::resolve($routeName, $args);
     }
 }
 

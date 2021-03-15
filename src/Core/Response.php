@@ -2,6 +2,8 @@
 
 namespace Illuminate\Core;
 
+use Illuminate\Facade\Redirect;
+
 class Response
 {
     /**
@@ -26,6 +28,18 @@ class Response
     {
         $this->_responseHeader = getallheaders();
         $this->_responseStatus = http_response_code();
+    }
+
+    /**
+     * Aborting the route to the spesific error code
+     * @param int $statusCode
+     * @return \Illuminate\Core\Response|self
+     */
+    public function abort($statusCode)
+    {
+        $this->status($statusCode);
+        Redirect::abort($statusCode);
+        return $this;
     }
 
     /**

@@ -24,6 +24,7 @@ class Application extends Container
 
         $this->singleton(Application::class);
         $this->singleton(Config::class);
+        $this->singleton(Redirect::class);
         $this->singleton(Request::class);
         $this->singleton(Response::class);
         $this->singleton(Middleware::class);

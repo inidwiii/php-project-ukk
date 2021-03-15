@@ -81,6 +81,17 @@ class Container
     }
 
     /**
+     * Get the required dependencies from the spesific method
+     * @param \ReflectionMethod|null $method
+     * @param array $args
+     * @return array
+     */
+    public function makeDependencies($method, array $args = [])
+    {
+        return $this->resolveDependencies($method, $args);
+    }
+
+    /**
      * Registering a new instance object into  
      * the container as a singleton instance 
      * @param string $abstract

@@ -107,8 +107,7 @@ class Route
         $this->_response->header('X-App-CSRF', $_SESSION['_token']);
         $this->_response->header('X-App-Name', Config::get('app.name'));
         $this->_response->header('X-App-Lang', Config::get('app.lang'));
-        $this->_response->status(404);
-        die('404 - Not Found');
+        $this->_response->abort(404);
     }
 
     /**
@@ -151,6 +150,38 @@ class Route
     public function name($name)
     {
         return $this->registerRouteName($this->_current, $name);
+    }
+
+    /**
+     * Resolving url from the route with the given route name or path
+     * @param string $routeName
+     * @param array $routeParams
+     * @return string
+     * @throws \InvalidArgumentException
+     */
+    public function resolve($routeName, $routeParams)
+    {
+        $url = (array_key_exists($routeName, $this->_routeMap)
+            ? $this->_routeMap[$routeName]
+            : $this->_namedMap[$routeName]) ?? null;
+
+        if (is_null($url)) {
+            throw new \InvalidArgumentException("Can't find route with name '{$routeName}'");
+        }
+
+        $result = preg_replace_callback('/(\{\w+\??\})/i', function ($match) use (&$routeParams) {
+            $paramName = str_replace(['{', '}'], '', $match[0] ?? $match[1]);
+
+            if (!array_key_exists($paramName, $routeParams)) {
+                throw new \InvalidArgumentException("Route arguments is required at '{$paramName}'");
+            }
+
+            $paramValue = $routeParams[$paramName] ?? '';
+            unset($routeParams[$paramName]);
+            return $paramValue;
+        }, $url);
+
+        return $this->_request->base($result);
     }
 
     /**
@@ -224,7 +255,7 @@ class Route
             return $this;
         }
 
-        $this->_namedMap[$url] = $name;
+        $this->_namedMap[$name] = $url;
         return $this;
     }
 
@@ -273,6 +304,7 @@ class Route
     /**
      * Resolving controller object
      * @return void
+     * @throws \ReflectionException|\TypeError
      */
     private function resolveController()
     {
@@ -285,6 +317,7 @@ class Route
      * Resolving registered middleware
      * @param string $routeId
      * @return void
+     * @throws \InvalidArgumentException
      */
     private function resolveMiddleware($routeId)
     {
@@ -308,6 +341,7 @@ class Route
      * Resolving response content
      * @param string|null &$response
      * @return string
+     * @throws \ReflectionException|\TypeError
      */
     private function resolveRoute(&$response)
     {
