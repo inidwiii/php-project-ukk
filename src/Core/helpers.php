@@ -1,6 +1,8 @@
 <?php
 
 use Illuminate\Core\Application;
+use Illuminate\Core\Config;
+use Illuminate\Core\Request;
 
 if (!function_exists('app')) {
     /**
@@ -98,6 +100,31 @@ if (!function_exists('array_set')) {
 
         $temp[array_shift($keys)] = $value;
         return $value;
+    }
+}
+
+if (!function_exists('config')) {
+    /**
+     * Get the config data stored globally
+     * @param string $key
+     * @param mixed $default
+     * @return mixed
+     */
+    function config($key, $default = null)
+    {
+        return app(Config::class)->get($key, $default);
+    }
+}
+
+if (!function_exists('csrf')) {
+    /**
+     * Creating input template / blueprint for including CSRF token
+     * @return string
+     */
+    function csrf()
+    {
+        $_token = $_SESSION['_token'];
+        return '<input type="hidden" name="_token" value="' . $_token . '" />';
     }
 }
 

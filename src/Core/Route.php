@@ -14,6 +14,8 @@ class Route
      */
     private $_current;
 
+    private $_middleware;
+
     /**
      * Hold the middlewares attached to the route
      * @var array $_middlewareMap
@@ -44,9 +46,10 @@ class Route
      */
     private $_routeMap = [];
 
-    public function __construct(Request $request, Response $response)
+    public function __construct(Middleware $middleware, Request $request, Response $response)
     {
-        $this->_request = $request->capture();
+        $this->_middleware = $middleware;
+        $this->_request = $request;
         $this->_response = $response;
     }
 
@@ -57,6 +60,7 @@ class Route
     public function capture()
     {
         $this->_current = null;
+        $this->extractRoute();
 
         $requestMethod = $this->_request->method();
         $requestPath = $this->_request->path();
@@ -65,10 +69,34 @@ class Route
             if (preg_match($route['reg'], $requestPath, $routeParams) && $route['method'] === $requestMethod) {
                 extract($this->extractRouteData($routeId, $route, $routeParams));
 
-                $this->_response->header('X-App-Name', app(Config::class)->get('app.name'));
-                $this->_response->status(200);
+                foreach ($this->_middlewareMap[$routeId] as $middleware) {
+                    $middleware = $this->_middleware->resolve($middleware);
 
-                return app()->dispatch($routeController, $routeMethod, ...$routeParams);
+                    if (is_array($middleware)) {
+                        $this->_middleware->registerGroup($middleware);
+                        continue;
+                    }
+
+                    $this->_middleware->register(new $middleware);
+                }
+
+                $this->_middleware->executeBeforeRequest();
+
+                // current
+                $responseContent = app()->dispatch($routeController, $routeMethod, ...$routeParams);
+
+                $this->_response->withHeaders([
+                    'X-App-Name'        => config('app.name'),
+                    'X-App-Lang'        => config('app.lang'),
+                    'Content-Length'    => strlen($responseContent)
+                ])->status(200);
+
+                echo $responseContent;
+                // end current
+
+                $this->_middleware->executeAfterRequest();
+
+                return;
             }
         }
 
@@ -116,6 +144,17 @@ class Route
     public function name($name)
     {
         return $this->registerRouteName($this->_current, $name);
+    }
+
+    /**
+     * Collecting all route that need to be registered
+     * @return void
+     */
+    private function extractRoute()
+    {
+        foreach (glob(PATH_ROUTE . '*.php') as $routeFile) {
+            require $routeFile;
+        }
     }
 
     /**

@@ -46,6 +46,8 @@ class Request
      */
     private $_requestScheme;
 
+    private $_requestToken;
+
     /**
      * Hold request uri
      * @var string $_requestUri
@@ -64,7 +66,7 @@ class Request
      */
     public function base($suffix = null)
     {
-        return "{$this->_requestScheme}://{$this->_requestHost}/ukk" . ltrim($suffix ?? '/', '/');
+        return "{$this->_requestScheme}://{$this->_requestHost}/" . config('app.base') . trim($suffix ?? '/', '/');
     }
 
     /**
@@ -81,6 +83,7 @@ class Request
         $this->_requestPort     = $_SERVER['SERVER_PORT'];
         $this->_requestQuery    = [];
         $this->_requestScheme   = $_SERVER['REQUEST_SCHEME'];
+        $this->_requestToken    = $_SESSION['_token'];
         $this->_requestUri      = str_replace(PATH_BASE, '', $this->_requestPath);
 
         foreach ($_GET as $key => $v) {
@@ -123,6 +126,24 @@ class Request
     }
 
     /**
+     * Get the current requested method
+     * @return string
+     */
+    public function method()
+    {
+        return mb_convert_case($this->_requestMethod, MB_CASE_LOWER);
+    }
+
+    /**
+     * Get the current request path, with base trimming 
+     * @return string
+     */
+    public function path()
+    {
+        return str_replace(config('app.base'), '', $this->_requestPath);
+    }
+
+    /**
      * Get one or all data from the query string
      * @param string|null $key
      * @param mixed|null $default
@@ -152,6 +173,21 @@ class Request
         $url .= $full && !empty($_SERVER['QUERY_STRING']) ? '?' . $_SERVER['QUERY_STRING'] : '';
 
         return $url;
+    }
+
+    /**
+     * Handle the logic to validating the CSRF Token Given
+     * @return bool
+     */
+    public function validateCSRFToken()
+    {
+        $_token = $this->input('_token');
+
+        if (is_null($_token) || !(bool) $_token) {
+            return false;
+        }
+
+        return (bool) $_token === $this->_requestToken;
     }
 
     public function __get($name)

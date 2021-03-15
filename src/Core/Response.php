@@ -5,6 +5,12 @@ namespace Illuminate\Core;
 class Response
 {
     /**
+     * Hold current response content
+     * @var string
+     */
+    private $_responseContent;
+
+    /**
      * Hold current response headers
      * @var array
      */
@@ -34,6 +40,7 @@ class Response
             return $this->_responseHeader[$name];
         }
 
+        $this->_responseHeader[$name] = $value;
         header("{$name}: {$value}");
         return $this;
     }
@@ -45,10 +52,9 @@ class Response
      */
     public function html($response)
     {
-        $this->header('Content-Length', strlen($response));
+        $this->_responseContent = $response;
         $this->header('Content-Type', 'text/html');
 
-        echo (string) $response;
         return $this;
     }
 
@@ -59,12 +65,9 @@ class Response
      */
     public function json($response)
     {
-        $response = json_encode($response, JSON_PRETTY_PRINT);
-
-        $this->header('Content-Length', strlen($response));
+        $this->_responseContent = json_encode($response, JSON_PRETTY_PRINT);
         $this->header('Content-Type', 'application/json');
 
-        echo $response;
         return $this;
     }
 
@@ -112,5 +115,10 @@ class Response
     public function __get($name)
     {
         return $this->{'_response' . mb_convert_case($name, MB_CASE_TITLE)};
+    }
+
+    public function __toString()
+    {
+        return $this->_responseContent;
     }
 }
