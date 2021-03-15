@@ -1,5 +1,7 @@
 <?php
 
+session_start();
+
 $config = json_decode(file_get_contents(realpath(__DIR__ . '/config.json')));
 
 try {

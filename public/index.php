@@ -31,5 +31,4 @@ require realpath(__DIR__ . '/../autoload.php');
  */
 
 $app = new \Illuminate\Core\Application;
-$req = new \Illuminate\Core\Request;
-$res = new \Illuminate\Core\Response;
+$app->initialize();

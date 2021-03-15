@@ -2,5 +2,6 @@
 
 return [
     'name' => 'EGovernment',
-    'base' => 'ukk/'
+    'base' => 'ukk/',
+    'lang' => 'en-US'
 ];
