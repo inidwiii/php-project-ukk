@@ -8,10 +8,10 @@ use Illuminate\Core\Response;
 class CSRFVerifyMiddleware extends BaseMiddleware
 {
     /**
-     * Handling request and response
+     * Handle logic for the incoming request
      * @param \Illuminate\Core\Request $request
      * @param \Illuminate\Core\Response $response
-     * @param callable $next 
+     * @param callable $next
      * @return callable
      */
     public function handle(Request $request, Response $response, $next)
